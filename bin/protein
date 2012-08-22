@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+$:.unshift File.expand_path('../lib', File.dirname(__FILE__))
+
+require 'protein'
+require 'optparse'
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: protein [options] COMMAND"
+
+  opts.separator ""
+  opts.separator "Options:"
+
+  opts.on("-r", "--rails [PATH]", "Rails root directory") do |rails_root|
+    Protein.config.rails_root = rails_root
+  end
+
+  opts.on("-e", "--environment [ENVIRONMENT]", "Environment") do |environment|
+    Protein.config.environment = environment
+  end
+
+  opts.on("-c", "--config [FILE]", "Configuration file") do |file|
+    Protein.config.config_files << file
+  end
+
+  opts.on("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+
+  opts.separator ""
+  opts.separator "Commands:"
+  opts.separator "  start   Start as daemon"
+  opts.separator "  restart Restart daemon"
+  opts.separator "  run     Start in current process"
+  opts.separator "  stop    Stop daemon"
+  opts.separator "  kill    Forcefully stop daemon"
+  opts.separator "  status  Status message"
+end
+
+parser.parse!
+
+case ARGV[0]
+when 'start'
+  Protein.control.start
+when 'restart'
+  Protein.control.restart
+when 'run'
+  Protein.control.run
+when 'stop'
+  Protein.control.stop
+when 'kill'
+  Protein.control.stop!
+when 'status'
+  puts Protein.control.status_message
+else
+  puts parser.help
+end

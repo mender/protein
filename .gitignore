@@ -1,0 +1,6 @@
+Gemfile.lock
+.bundle
+.idea
+.rvmrc
+log
+coverage
