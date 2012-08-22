@@ -1,5 +1,6 @@
 # -*- encoding : utf-8 -*-
 require 'protein/worker/lock'
+require 'protein/uuid'
 
 module Protein
   class Worker
@@ -240,7 +241,7 @@ module Protein
       end
 
       def generate_id
-        SecureRandom.uuid
+        Protein::Uuid.generate
       end
 
       def to_h

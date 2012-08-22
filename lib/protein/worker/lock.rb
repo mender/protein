@@ -1,4 +1,6 @@
 # -*- encoding : utf-8 -*-
+require 'protein/uuid'
+
 module Protein
   class Worker
     # BoundedSemaphore
@@ -64,7 +66,7 @@ module Protein
       protected
 
       def generate_id
-        SecureRandom.uuid
+        Protein::Uuid.generate
       end
 
       def with_release

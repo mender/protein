@@ -82,9 +82,9 @@ describe Protein::Process do
 
     if GC.respond_to?(:copy_on_write_friendly=)
       it 'should enable gc optimization' do
-        GC.copy_on_write_friendly = false
-        @process.startup
-        assert_equal true, GC.copy_on_write_friendly
+        assert_call GC, :copy_on_write_friendly=, true do
+          @process.startup
+        end
       end
     end
   end
@@ -151,7 +151,7 @@ describe Protein::Process do
 
     it 'should close logger' do
       assert_call(@process.logger, :close) {
-        @process.exit 
+        @process.exit
       }
     end
 
@@ -169,7 +169,7 @@ describe Protein::Process do
     end
 
     it 'should exit from current process if logger raises exception' do
-      @process.logger.stub :close, Proc.new{raise RuntimeError} do
+      @process.logger.stub(:close, Proc.new{raise RuntimeError}) do
         @process.exit
       end
       refute_nil @process.exit_flag
@@ -263,7 +263,7 @@ describe Protein::Process do
   describe '#fork' do
     before do
       @process.can_fork = true
-    end  
+    end
 
     it 'should flush logger' do
       @process.stub :kernel_fork, nil do
@@ -315,7 +315,7 @@ describe Protein::Process do
         assert_equal(
           {:stdin  => ['/dev/null'], :stdout => ['/dev/null'], :stderr => ['/dev/null']},
           @process.io_changes
-        )  
+        )
       end
     end
 
@@ -324,23 +324,23 @@ describe Protein::Process do
         Dir.chdir('/tmp')
         @process.fork
         assert_equal '/', Dir.pwd
-      end  
+      end
     end
 
-    it 'should reconnect in shild process' do
+    it 'should reconnect in child process' do
       @process.stub :kernel_fork, nil do
         assert_call(@process, :reconnect) do
           @process.fork
         end
-      end  
-    end 
+      end
+    end
 
-    it 'should startup in shild process' do
+    it 'should startup in child process' do
       @process.stub :kernel_fork, nil do
         assert_call(@process, :startup) do
           @process.fork
         end
-      end  
+      end
     end
 
     it 'should fire after_fork callbacks in child process' do
@@ -349,5 +349,5 @@ describe Protein::Process do
         assert_equal [:after_fork], recorder
       end
     end
-  end   
+  end
 end

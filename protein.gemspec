@@ -20,6 +20,7 @@ Gem::Specification.new do |gem|
   #gem.rdoc_options     = ["--charset=UTF-8"]
 
   gem.add_dependency "redis", '~> 2'
+  gem.add_dependency "uuidtools"
   gem.add_dependency "activesupport", '~> 3.0' # FUCK!!!
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'minitest'

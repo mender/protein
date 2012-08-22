@@ -60,12 +60,12 @@ module Protein
       end
 
       def item_getter(*names)
-        delegate(*names, :to => :item)
+        delegate(*(names + [:to => :item]))
       end
 
       def item_setter(*names)
         names = names.map { |name| "#{name}=" }
-        delegate(*names, :to => :item)
+        delegate(*(names + [:to => :item]))
       end
 
       def item_accessor(*names)
