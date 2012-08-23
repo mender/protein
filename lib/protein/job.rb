@@ -94,7 +94,7 @@ module Protein
     end
 
     def to_s
-      @str ||= ":id => #{id}, :name => #{klass_name}, created_at => #{created_at}, :args => #{args.inspect}"
+      @str ||= "id => #{id}, name => #{klass_name}, created_at => #{created_at}, args => #{args.inspect}"
     end
 
     protected

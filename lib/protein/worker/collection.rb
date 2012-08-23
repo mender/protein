@@ -217,7 +217,7 @@ module Protein
 
       def working_on(job)
         self.status         = :busy
-        self.job            = job
+        self.job            = job.to_s
         self.job_started_at = Time.now
         save
       end

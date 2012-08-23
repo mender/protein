@@ -109,13 +109,13 @@ describe Protein::Middleware::Chain do
   it 'should override to_s method' do
     created_at = Time.now
     job = Protein::Job.new(:class => 'CustomWork', :args => [42], :created_at => created_at, :id => 'item_id')
-    assert_equal job.to_s, ":id => item_id, :name => CustomWork, created_at => #{created_at}, :args => [42]"
+    assert_equal job.to_s, "id => item_id, name => CustomWork, created_at => #{created_at}, args => [42]"
   end
 
   it 'should override inspect method' do
     created_at = Time.now
     job = Protein::Job.new(:class => 'CustomWork', :args => [42], :created_at => created_at, :id => 'item_id')
-    assert_equal job.inspect, "#<Protein::Job :id => item_id, :name => CustomWork, created_at => #{created_at}, :args => [42]>"
+    assert_equal job.inspect, "#<Protein::Job id => item_id, name => CustomWork, created_at => #{created_at}, args => [42]>"
   end
 
   describe '#middleware' do

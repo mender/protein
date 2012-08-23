@@ -211,15 +211,19 @@ describe Protein::Daemon do
     end
 
     it 'should return daemon pid in parent process' do
-      Kernel.stub(:fork, 42) do
-        assert_equal 42, @daemon.run_in_background
+      allow_forks do
+        Kernel.stub(:fork, 42) do
+          assert_equal 42, @daemon.run_in_background
+        end
       end
     end
 
     it 'should not run daemon in parent process' do
-      Kernel.stub(:fork, 42) do
-        assert_call_count 0, @daemon, :run do
-          @daemon.run_in_background
+      allow_forks do
+        Kernel.stub(:fork, 42) do
+          assert_call_count 0, @daemon, :run do
+            @daemon.run_in_background
+          end
         end
       end
     end

@@ -2,7 +2,7 @@
 ENV['RACK_ENV'] = ENV['RAILS_ENV'] = 'test'
 if ENV.has_key?("SIMPLECOV")
   require 'simplecov'
-  SimpleCov.start
+  SimpleCov.start { add_filter "/test/" }
 end
 
 dir = File.dirname(File.expand_path(__FILE__))
@@ -25,6 +25,8 @@ Protein.config do |c|
 
   c.worker_live_time = 60 * 60
   c.worker_jobs_limit = 100
+
+  c.can_fork = false
 
   c.redis = {
     :host => 'localhost',
@@ -141,8 +143,8 @@ class InvalidWork
   end
 end
 
-def without_forks
-  current, Protein.process.can_fork = Protein.process.can_fork, false
+def allow_forks
+  current, Protein.process.can_fork = Protein.process.can_fork, true
   yield
 ensure
   Protein.process.can_fork = current
