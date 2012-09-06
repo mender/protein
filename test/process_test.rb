@@ -207,23 +207,23 @@ describe Protein::Process do
       assert_equal recorder, signals
     end
 
-    it 'should trap TERM and INT signals' do
-      assert_trap_signal 'TERM', 'INT' do
+    it 'should trap TERM, INT and HUP signals' do
+      assert_trap_signal 'TERM', 'INT', 'HUP' do
         @process.trap_signals
       end
     end
 
-    it 'should release TERM and INT signals if block given' do
-      assert_trap_signal 'TERM', 'INT' do
-        assert_release_signal 'TERM', 'INT' do
+    it 'should release TERM, INT and HUP signals if block given' do
+      assert_trap_signal 'TERM', 'INT', 'HUP' do
+        assert_release_signal 'TERM', 'INT', 'HUP' do
           @process.trap_signals {}
         end
       end
     end
 
-    it 'should release TERM and INT signals if exception raised' do
-      assert_trap_signal 'TERM', 'INT' do
-        assert_release_signal 'TERM', 'INT' do
+    it 'should release TERM, INT and HUP signals if exception raised' do
+      assert_trap_signal 'TERM', 'INT', 'HUP' do
+        assert_release_signal 'TERM', 'INT', 'HUP' do
           @process.trap_signals { raise RuntimeError } rescue nil
         end
       end

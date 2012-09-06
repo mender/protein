@@ -30,6 +30,7 @@ module Protein
     def trap_signals
       signals.trap("TERM") { stop }
       signals.trap("INT")  { stop }
+      signals.trap("HUP")  { logger.debug 'SIGHUP received' }
       if block_given?
         begin
           yield
@@ -43,6 +44,7 @@ module Protein
     def release_signals
       signals.release("TERM")
       signals.release("INT")
+      signals.release("HUP")
       nil
     end
 
