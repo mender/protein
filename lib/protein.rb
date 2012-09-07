@@ -52,10 +52,6 @@ module Protein
       @process ||= Protein::Process.new
     end
 
-    def queue
-      @queue ||= Protein::Queue.new
-    end
-
     def redis
       @redis ||= Protein::Redis.new
     end

@@ -208,6 +208,18 @@ module Protein
       end
     end
 
+    def mblpop(*args)
+      timeout = args.last.is_a?(Numeric) ? args.pop : 0
+      keys = args.map{ |key| _key(key) }
+
+      result = redis.blpop *keys, timeout
+      if result
+        [result[0].sub(key_prefix + ':', ''), u(result[1])]
+      else
+        nil
+      end
+    end
+
 
     # execute +block+ with pessimistic locking
     def synchronize(mutex_id, &block)
@@ -249,9 +261,12 @@ module Protein
     end
     alias_method :u, :unserialize
 
+    def key_prefix
+      @key_prefix ||= config.redis[:namespace]
+    end
+
     def _key(key)
-      @key_suffix ||= config.redis[:namespace]
-      "#{@key_suffix}:#{key}"
+      "#{key_prefix}:#{key}"
     end
   end
 

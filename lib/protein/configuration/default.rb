@@ -43,6 +43,7 @@ module Protein
 
           :queue_key     => "queue",
           :queue_timeout => 5, # in seconds
+          :queues        => [:default],
 
           :maintenance_timeout => 1 * 60, # in seconds
 

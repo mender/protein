@@ -2,7 +2,7 @@
 module Protein
   class Job
     class << self
-      delegate :config, :logger, :queue, :redis, :to => :Protein
+      delegate :config, :logger, :redis, :to => :Protein
 
       def default_middleware
         Middleware::Chain.new
@@ -19,12 +19,16 @@ module Protein
           raise ArgumentError, "Jobs class is not specified"
         end
 
+        queue = extract_queue!(args)
+        raise ArgumentError, "Invalid queue name" if queue.nil?
+
         item = {
           :id         => next_id,
           :class      => klass.to_s,
           :args       => args,
           :created_at => Time.now.to_f
         }
+
         middleware.invoke(item) do
           #logger.debug("Create job #{item.inspect}")
           queue.push(item)
@@ -33,14 +37,14 @@ module Protein
       end
 
       def next
-        job = queue.poll(config.queue_timeout)
+        job = Queue.poll(config.queue_timeout)
         job.present? ? new(job) : nil
       end
 
       def delete_all
         #logger.debug("Delete all jobs")
         # TODO need sync
-        queue.reset
+        Queue.reset_all
         reset_id
       end
 
@@ -51,12 +55,28 @@ module Protein
       def reset_id
         redis.zero(config.sequence_key)
       end
+
+      protected
+
+      def extract_queue_name!(args)
+        options = args.last.is_a?(Hash) ? args.pop : {}
+        name = options.delete(:queue)
+        args.push(options) unless options.blank?
+        name
+      end
+
+      def extract_queue!(args)
+        queue_name = extract_queue_name!(args)
+        queue_name ? Queue.find(queue_name) : Queue.default
+      end
     end
     
-    delegate :config, :logger, :queue, :to => :Protein
+    delegate :config, :logger, :to => :Protein
+    attr_accessor :queue_name
     
     def initialize(job)  
       @job = job
+      @queue_name = @job.delete(:queue)
     end
 
     def id
@@ -83,9 +103,18 @@ module Protein
       klass.perform(*args)
     end
 
+    def queue
+      Queue.find(queue_name)
+    end
+
     def rollback
-      logger.debug "Rollback job #{@job.inspect}"
-      queue.unshift(@job)
+      queue = self.queue
+      if queue
+        logger.debug "Rollback job #{@job.inspect}"
+        queue.unshift(@job)
+      else
+        logger.debug "Rollback job #{@job.inspect}: queue is not specified, nothing to do"
+      end
       self
     end
 
@@ -94,7 +123,7 @@ module Protein
     end
 
     def to_s
-      @str ||= "id => #{id}, name => #{klass_name}, created_at => #{created_at}, args => #{args.inspect}"
+      @str ||= "id => #{id}, name => #{klass_name}, queue => #{queue_name}, created_at => #{created_at}, args => #{args.inspect}"
     end
 
     protected

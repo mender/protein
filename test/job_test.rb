@@ -8,10 +8,6 @@ describe Protein::Middleware::Chain do
   end
 
   class MockQueueJob < Protein::Job
-    def self.queue
-      @queue ||= MiniTest::Mock.new
-    end
-
     def queue
       @queue ||= MiniTest::Mock.new
     end
@@ -29,6 +25,35 @@ describe Protein::Middleware::Chain do
     end
     def self.perform(*args)
       @perform_args = args
+    end
+  end
+
+  it 'should delete queue name from payload hash' do
+    job = Protein::Job.new(:id => 42, :queue => 'some_queue')
+    assert_equal({:id => 42}, job.instance_variable_get(:'@job'))
+  end
+
+  describe '#queue_name' do
+    it 'should return queue name' do
+      job = Protein::Job.new(:queue => 'some_queue')
+      assert_equal 'some_queue', job.queue_name
+    end
+
+    it 'should return nil if queue name is not specified' do
+      job = Protein::Job.new({})
+      assert_nil job.queue_name
+    end
+  end
+
+  describe '#queue' do
+    it 'should return queue object if specified' do
+      job = Protein::Job.new(:queue => :default)
+      assert_equal Protein::Queue.default, job.queue
+    end
+
+    it 'should return nil if queue is not specified' do
+      job = Protein::Job.new({})
+      assert_nil job.queue
     end
   end
 
@@ -91,31 +116,49 @@ describe Protein::Middleware::Chain do
   describe '#rollback' do
     before do
       @job_item = {:class => 'RollbackMe', :args => []}
-      @job = MockQueueJob.new(@job_item)
+      @job = Protein::Job.new(@job_item)
     end
 
     it 'should unshift job item' do
-      @job.queue.expect(:unshift, nil, [@job_item])
-      @job.rollback
-      @job.queue.verify
+      queue = Protein::Queue.new(:some_queue)
+      @job.stub :queue, queue do
+        assert_call queue, :unshift, @job_item do
+          @job.rollback
+        end
+      end
     end
 
     it 'should return self' do
-      @job.queue.expect(:unshift, nil, [@job_item])
       assert_equal @job, @job.rollback
     end
   end
 
-  it 'should override to_s method' do
-    created_at = Time.now
-    job = Protein::Job.new(:class => 'CustomWork', :args => [42], :created_at => created_at, :id => 'item_id')
-    assert_equal job.to_s, "id => item_id, name => CustomWork, created_at => #{created_at}, args => [42]"
+  describe '#to_s' do
+    it 'should override to_s method' do
+      created_at = Time.now
+      job = Protein::Job.new(:class => 'CustomWork', :args => [42], :created_at => created_at, :id => 'item_id')
+      assert_equal job.to_s, "id => item_id, name => CustomWork, queue => , created_at => #{created_at}, args => [42]"
+    end
+
+    it 'should insert queue name' do
+      created_at = Time.now
+      job = Protein::Job.new(:class => 'CustomWork', :args => [42], :created_at => created_at, :id => 'item_id', :queue => 'some_queue')
+      assert_equal job.to_s, "id => item_id, name => CustomWork, queue => some_queue, created_at => #{created_at}, args => [42]"
+    end
   end
 
-  it 'should override inspect method' do
-    created_at = Time.now
-    job = Protein::Job.new(:class => 'CustomWork', :args => [42], :created_at => created_at, :id => 'item_id')
-    assert_equal job.inspect, "#<Protein::Job id => item_id, name => CustomWork, created_at => #{created_at}, args => [42]>"
+  describe '#inspect' do
+    it 'should override inspect method' do
+      created_at = Time.now
+      job = Protein::Job.new(:class => 'CustomWork', :args => [42], :created_at => created_at, :id => 'item_id')
+      assert_equal job.inspect, "#<Protein::Job id => item_id, name => CustomWork, queue => , created_at => #{created_at}, args => [42]>"
+    end
+
+    it 'should insert queue name' do
+      created_at = Time.now
+      job = Protein::Job.new(:class => 'CustomWork', :args => [42], :created_at => created_at, :id => 'item_id', :queue => 'some_queue')
+      assert_equal job.inspect, "#<Protein::Job id => item_id, name => CustomWork, queue => some_queue, created_at => #{created_at}, args => [42]>"
+    end
   end
 
   describe '#middleware' do
@@ -134,6 +177,42 @@ describe Protein::Middleware::Chain do
         assert_equal result, chain
         assert_equal yield_with, chain
       end
+    end
+  end
+
+  describe '#extract_queue!' do
+    it 'should find queue' do
+      assert_call Protein::Queue, :find, :some_queue do
+        Protein::Job.send(:extract_queue!, [{:queue => :some_queue}])
+      end
+    end
+
+    it 'should return default queue if args array is blank' do
+      assert_equal Protein::Queue.default, Protein::Job.send(:extract_queue!, [])
+    end
+
+    it 'should return default queue if last arg is not a hash' do
+      assert_equal Protein::Queue.default, Protein::Job.send(:extract_queue!, [{:queue => :some_queue}, 42])
+    end
+
+    it 'should return default queue if queue is not specified' do
+      assert_equal Protein::Queue.default, Protein::Job.send(:extract_queue!, [{:some => :args}])
+    end
+
+    it 'should return nil if queue was not found' do
+      assert_nil Protein::Job.send(:extract_queue!, [{:queue => :not_exists}])
+    end
+
+    it 'should delete queue key from args' do
+      args = ['f', 'b', {:company => 1, :queue => :some_queue}]
+      Protein::Job.send(:extract_queue!, args)
+      assert_equal ['f', 'b', {:company => 1}], args
+    end
+
+    it 'should delete empty args hash' do
+      args = ['f', 'b', {:queue => :some_queue}]
+      Protein::Job.send(:extract_queue!, args)
+      assert_equal ['f', 'b'], args
     end
   end
 
@@ -196,37 +275,48 @@ describe Protein::Middleware::Chain do
 
     it 'should push item to the queue' do
       pushed = nil
+      queue = Protein::Queue.new(:some_queue)
       SimpleJob.reset_id
-      SimpleJob.queue.stub :push, Proc.new{ |item| pushed = item } do
-        SimpleJob.create(SimpleWork, 42)
-        assert_instance_of Hash, pushed
-        assert_equal 1, pushed[:id]
-        assert_equal 'SimpleWork', pushed[:class]
-        assert_equal [42], pushed[:args]
+      Protein::Job.stub :extract_queue!, queue do
+        queue.stub :push, Proc.new{ |item| pushed = item } do
+          SimpleJob.create(SimpleWork, 42)
+          assert_instance_of Hash, pushed
+          assert_equal 1, pushed[:id]
+          assert_equal 'SimpleWork', pushed[:class]
+          assert_equal [42], pushed[:args]
+        end
+      end
+    end
+
+    it 'should raise ArgumentError if invalid queue name is specified' do
+      Protein::Job.stub :extract_queue!, nil do
+        assert_raises ArgumentError do
+          SimpleJob.create(SimpleWork)
+        end
       end
     end
   end
 
   describe '#next' do
-    it 'should call queue#poll method with queue_timeout configuration variable' do
-      MockQueueJob.queue.expect(:poll, nil, [5])
-      MockQueueJob.next
-      MockQueueJob.queue.verify
+    it 'should call Queue.poll method with queue_timeout configuration variable' do
+      assert_call Protein::Queue, :poll, 5 do
+        Protein::Job.next
+      end
     end
 
     it 'should return nil if queue is empty' do
-      MockQueueJob.queue.expect(:poll, nil, [5])
-      assert_nil MockQueueJob.next
-      MockQueueJob.queue.verify
+      Protein::Queue.stub :poll, nil do
+        assert_nil Protein::Job.next
+      end
     end
 
     it 'should return self instance created from queue item' do
       queue_item = {:class => 'SimpleWork', :args => [42]}
-      MockQueueJob.queue.expect(:poll, queue_item, [5])
-      job = MockQueueJob.next
-      assert_instance_of MockQueueJob, job
-      assert_equal queue_item, job.instance_variable_get(:@job)
-      MockQueueJob.queue.verify
+      Protein::Queue.stub :poll, queue_item do
+        job = Protein::Job.next
+        assert_instance_of Protein::Job, job
+        assert_equal queue_item, job.instance_variable_get(:@job)
+      end
     end
   end
 
@@ -248,10 +338,15 @@ describe Protein::Middleware::Chain do
   end
 
   describe '#delete_all' do
-    it 'should clean queue and reset id sequence' do
+    it 'should clean all queues' do
+      assert_call Protein::Queue, :reset_all do
+        Protein::Job.delete_all
+      end
+    end
+
+    it 'should reset id sequence' do
       Protein::Job.create(SimpleWork)
       Protein::Job.delete_all
-      assert Protein::Job.queue.empty?
       assert_equal 1, Protein::Job.next_id
     end
   end
