@@ -5,7 +5,8 @@ module Protein
       delegate :config, :redis, :to => :Protein
 
       def blpop(timeout = 0)
-        queue_key, item = redis.mblpop(*keys, timeout)
+        args = keys + [timeout]
+        queue_key, item = redis.mblpop(*args)
         item[:queue] = extract_queue_name(queue_key) unless item.nil?
         yield(item) if block_given?
         item

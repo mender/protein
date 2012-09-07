@@ -211,8 +211,9 @@ module Protein
     def mblpop(*args)
       timeout = args.last.is_a?(Numeric) ? args.pop : 0
       keys = args.map{ |key| _key(key) }
+      keys << timeout
 
-      result = redis.blpop *keys, timeout
+      result = redis.blpop *keys
       if result
         [result[0].sub(key_prefix + ':', ''), u(result[1])]
       else
