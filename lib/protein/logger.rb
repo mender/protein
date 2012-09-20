@@ -18,6 +18,25 @@ module Protein
     attr_accessor :level
     attr_reader :auto_flushing
 
+    ##
+    # :singleton-method:
+    # Set to false to disable the silencer
+    cattr_accessor :silencer
+    self.silencer = true
+
+    def silence(temporary_level = ERROR)
+      if silencer
+        begin
+          old_logger_level, self.level = level, temporary_level
+          yield self
+        ensure
+          self.level = old_logger_level
+        end
+      else
+        yield self
+      end
+    end
+
     def initialize(log, level = DEBUG)
       @log_file      = log
       @level         = level_number(level)
