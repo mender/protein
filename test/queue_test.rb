@@ -127,12 +127,12 @@ describe Protein::Queue do
 
     it 'should add queue name to item and return it' do
       @redis.expect(:mblpop, ['key', {:id => 42}], ['test_queue:q1', 'test_queue:q2', 0])
-      assert_equal({:id => 42, :queue => 'key'}, TestQueue.blpop)
+      assert_equal({:id => 42, :queue => :key}, TestQueue.blpop)
     end
 
     it 'should delete queue key prefix from queue name' do
       @redis.expect(:mblpop, ['test_queue:q1', {:id => 42}], ['test_queue:q1', 'test_queue:q2', 0])
-      assert_equal({:id => 42, :queue => 'q1'}, TestQueue.blpop)
+      assert_equal({:id => 42, :queue => :q1}, TestQueue.blpop)
     end
   end
 

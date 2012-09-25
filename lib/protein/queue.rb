@@ -54,7 +54,7 @@ module Protein
       end
 
       def extract_queue_name(key)
-        key.sub(key_prefix + ':', '')
+        key.sub(key_prefix + ':', '').to_sym
       end
     end
 
