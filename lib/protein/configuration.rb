@@ -142,7 +142,7 @@ module Protein
               ActiveRecord::Base.connection.reconnect!
               ActiveRecord::Base.verify_active_connections!
             end
-            Rails.cache.reset if defined?(RAILS_CACHE)
+            Rails.cache.reset if defined?(RAILS_CACHE) && Rails.cache.respond_to?(:reset)
           end  
         end
       end  
