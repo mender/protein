@@ -23,21 +23,26 @@ module Protein
 
       def create(type, &block)
         collection(type).add do |worker|
-          process.fork do
-            begin
-              if block_given?
-                worker.do(&block)
-              else
-                worker
+          begin
+            process.fork do
+              begin
+                if block_given?
+                  worker.do(&block)
+                else
+                  worker
+                end
+              rescue => e
+                logger.error "Unhandled exception"
+                logger.error e
+              ensure
+                safe_delete(worker)
+                process.exit
               end
-            rescue => e
-              logger.error "Unhandled exception"
-              logger.error e
-            ensure
-              safe_delete(worker)
-              process.exit
             end
-          end
+          rescue => e
+            safe_delete(worker)
+            raise e
+          end  
         end
       end
 

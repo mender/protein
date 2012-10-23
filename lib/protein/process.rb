@@ -78,6 +78,10 @@ module Protein
       !!self.can_fork
     end
 
+    def fork?
+      !!@is_fork
+    end
+
     def fork
       before_spawn
       if fork = kernel_fork
@@ -158,6 +162,10 @@ module Protein
       end
     end
 
+    def mark_as_fork
+      @is_fork = true
+    end
+
     def null_io
       null_file = "/dev/null"
       [STDIN, STDOUT, STDERR].each do |io|
@@ -170,6 +178,7 @@ module Protein
     end
 
     def after_fork
+      mark_as_fork
       null_io
       reset_dir
       reconnect

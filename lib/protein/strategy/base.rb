@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
 module Protein::Strategy
   class Base
-    delegate :config, :logger, :callbacks, :to => :Protein
+    delegate :config, :logger, :callbacks, :process, :to => :Protein
 
     def initialize
       callbacks.fire(:after_start)
@@ -70,6 +70,7 @@ module Protein::Strategy
     rescue Protein::TerminationError  
     rescue => e
       error("Unhandled exception", e)
+      process.exit if process.fork?
     end
 
     def log(message)
