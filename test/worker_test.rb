@@ -247,7 +247,10 @@ describe Protein::Worker do
 
     it 'should return workers with registered ids' do
       ids = Protein::Worker.all.map { |w| w.id }
-      assert_equal [@worker1.id, @worker2.id], ids
+
+      assert_equal 2, ids.count
+      assert_includes ids, @worker1.id
+      assert_includes ids, @worker2.id
     end
   end
 
