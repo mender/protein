@@ -9,9 +9,8 @@ dir = File.dirname(File.expand_path(__FILE__))
 $LOAD_PATH.unshift dir + '/../lib'
 
 require 'rubygems'
-require 'minitest/unit'
-require 'minitest/pride'
 require 'minitest/autorun'
+require 'minitest/pride'
 require 'protein'
 
 Protein.config do |c|

@@ -43,6 +43,9 @@ module Protein
       result = "Daemon:\n"
       result << info[:daemon].map { |(key, val)| "  #{key}: #{val}" } * "\n"
       result << "\n"
+      result << "Queues:\n"
+      result << queues_length
+      result << "\n"
       result << info[:workers].map { |w| "Worker:\n" + w.map { |(key, val)| "  #{key}: #{val}" } * "\n" } * "\n"
     end
 
@@ -132,6 +135,16 @@ module Protein
 
     def workers_info
       workers.map { |worker| worker.info }
+    end
+
+    def queues_length
+      result = []
+
+      Protein::Queue.names.each do |queue_name|
+        result << "  #{queue_name}: #{Protein::Queue.find(queue_name).length}"
+      end
+
+      result * "\n"
     end
 
     protected
