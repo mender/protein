@@ -2,5 +2,7 @@ Gemfile.lock
 .bundle
 .idea
 .rvmrc
+.ruby-version
+.ruby-gemset
 log
 coverage
