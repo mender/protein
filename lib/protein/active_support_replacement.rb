@@ -58,7 +58,7 @@ end
 # you can call this:
 #
 #   Rails.env.production?
-module Protein
+module ActiveSupport
   class StringInquirer < String
     private
 
