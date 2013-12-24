@@ -21,7 +21,9 @@ module Protein
     ##
     # :singleton-method:
     # Set to false to disable the silencer
-    cattr_accessor :silencer
+    class << self
+      attr_accessor :silencer
+    end
     self.silencer = true
 
     def silence(temporary_level = ERROR)

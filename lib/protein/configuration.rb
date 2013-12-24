@@ -47,12 +47,14 @@ module Protein
     def environment
       @environment ||= begin
         env = ENV["RAILS_ENV"] || ENV['RACK_ENV'] || ENV["ENV"] || ENV["ENVIRONMENT"]
-        ActiveSupport::StringInquirer.new(env || "development")
+        # TODO: use inquiry method
+        StringInquirer.new(env || "development")
       end  
     end
 
     def environment=(environment)
-      @environment = ActiveSupport::StringInquirer.new(environment.to_s)
+      # TODO: use inquiry method
+      @environment = StringInquirer.new(environment.to_s)
     end
 
     def define(&block)

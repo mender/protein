@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-require 'active_support/all'
+require 'protein/active_support_replacement'
 
 require 'protein/version'
 require 'protein/error'

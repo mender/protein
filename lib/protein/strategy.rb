@@ -5,6 +5,6 @@ require 'protein/strategy/multi'
 
 module Protein::Strategy
   def self.create(type)
-    "Protein::Strategy::#{type.to_s.camelize}".constantize.new
+    "Protein::Strategy::#{type.to_s.capitalize}".constantize.new
   end
 end
