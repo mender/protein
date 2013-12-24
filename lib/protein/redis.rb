@@ -243,6 +243,10 @@ module Protein
     def redis
       @redis ||= ::Redis.new(config.redis)
     end
+    alias :connection :redis
+
+    attr_writer :redis
+    alias :connection= :redis=
 
     def reconnect
       redis.client.reconnect

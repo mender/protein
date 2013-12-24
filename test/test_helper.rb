@@ -12,6 +12,7 @@ require 'rubygems'
 require 'minitest/autorun'
 require 'minitest/pride'
 require 'protein'
+require 'mock_redis'
 
 Protein.config do |c|
   c.log_file = File.expand_path('../log/protein.log', File.dirname(__FILE__))
@@ -27,13 +28,13 @@ Protein.config do |c|
 
   c.can_fork = false
 
-  c.redis = {
-    :host => 'localhost',
-    :port => 6379,
-    :namespace => "protein_test"
-  }
   c.finalize
 end
+
+Protein.tap do |p|
+  p.redis.connection = MockRedis.new
+end
+
 def config
   Protein.config
 end
