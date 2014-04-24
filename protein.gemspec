@@ -26,4 +26,8 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'minitest'
   gem.add_development_dependency 'simplecov'
   gem.add_development_dependency 'mock_redis'
+
+  gem.description = %s{
+    Protein is a Redis-backed Ruby library for creating background jobs,
+    placing those jobs on multiple queues, and processing them later.}
 end
