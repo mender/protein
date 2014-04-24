@@ -1,10 +1,8 @@
 # -*- encoding : utf-8 -*-
-ENV['RACK_ENV'] = ENV['RAILS_ENV'] = 'test'
-if ENV.has_key?("SIMPLECOV")
-  require 'simplecov'
-  SimpleCov.start { add_filter "/test/" }
-end
+require 'coveralls'
+Coveralls.wear!
 
+ENV['RACK_ENV'] = ENV['RAILS_ENV'] = 'test'
 dir = File.dirname(File.expand_path(__FILE__))
 $LOAD_PATH.unshift dir + '/../lib'
 
