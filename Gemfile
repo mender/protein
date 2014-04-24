@@ -4,3 +4,7 @@ gemspec
 
 group :test do
 end
+
+group :documentation do
+  gem 'coveralls', :require => false
+end
