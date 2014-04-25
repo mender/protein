@@ -350,4 +350,25 @@ describe Protein::Process do
       end
     end
   end
+
+  describe 'tools' do
+    describe '#kill' do
+      it 'should send kill signal' do
+        count = 0
+        @process.tools.stub :exists?, Proc.new{|*_| (count += 1) == 1} do
+          assert_call(::Process, :kill, 'KILL', Process.pid) do
+            @process.tools.kill(Process.pid)
+          end
+        end
+      end
+      it 'should send term signal' do
+        count = 0
+        @process.tools.stub :exists?, Proc.new{|*_| (count += 1) == 1} do
+          assert_call(::Process, :kill, 'TERM', Process.pid) do
+            @process.tools.term(Process.pid)
+          end
+        end
+      end
+    end
+  end
 end

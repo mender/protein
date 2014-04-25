@@ -272,37 +272,11 @@ module Protein
     end
 
     def term(pid)
-      return false unless l_exists?(pid)
-
-      handle_errors do
-        timeout(term_timeout) do
-          logger.info "Send TERM signal to process with pid #{pid}..."
-          ::Process.kill('TERM', pid)
-          sleep(1) while exists?(pid)
-          logger.info "Process with pid #{pid} successfully terminated"
-          return true
-        end
-      end
-
-      logger.info "Unable to terminate process with pid #{pid}"
-      false
+      send_stop_signal('TERM', pid, term_timeout)
     end
 
     def kill(pid)
-      return false unless l_exists?(pid)
-
-      handle_errors do
-        timeout(kill_timeout) do
-          logger.info "Send KILL signal to process with pid #{pid}..."
-          ::Process.kill('KILL', pid)
-          sleep(1) while exists?(pid)
-          logger.info "Process with pid #{pid} successfully killed"
-          return true
-        end
-      end
-
-      logger.info "Unable to kill process with pid #{pid}"
-      false
+      send_stop_signal('KILL', pid, kill_timeout)
     end
 
     def logger
@@ -318,6 +292,31 @@ module Protein
     end
 
     protected
+
+    def send_signal(signal, pid, seconds = 10.seconds)
+      return false unless l_exists?(pid)
+
+      handle_errors do
+        timeout(seconds) do
+          logger.info "Send #{signal} signal to process with pid #{pid}..."
+          ::Process.kill(signal, pid)
+          yield if block_given?
+          return true
+        end
+      end
+
+      false
+    end
+
+    def send_stop_signal(signal, pid, seconds = 10.seconds)
+      result = send_signal(signal, pid, seconds) do
+        sleep(1) while exists?(pid)
+      end
+
+      logger.info "Process with pid #{pid} successfully stopped" if result
+      logger.info "Unable to stop process with pid #{pid}"   unless result
+      result
+    end
 
     def l_exists?(pid)
       unless exists?(pid)

@@ -1,24 +1,13 @@
 # -*- encoding : utf-8 -*-
 require 'protein/configuration/default'
+require 'protein/configuration/accessor'
 
 module Protein
   class Configuration
     delegate :root, :project_root, :to => :default
     delegate :callbacks, :to => :Protein
 
-    def self.config_accessor(name)
-      name = name.to_s.to_sym
-      # setter
-      define_method("#{name}=") do |value| 
-        raise Protein::ConfigurationError.new("Attempt to modify finalized configuration") if finalized?
-        config[name] = value
-      end  
-      # getter
-      define_method(name) do
-        finalize 
-        config.key?(name) ? config[name] : default[name]
-      end  
-    end    
+    extend Accessor
 
     Protein::Configuration::Default.all.each_key do |name|
       config_accessor name
@@ -36,17 +25,21 @@ module Protein
       Protein::Version
     end
 
-    def rails_root
-      @rails_root ||= find_rails
+    def rails_app
+      @rails_app ||= Protein::RailsApp.new
     end
 
-    def rails_root=(root)
-      @rails_root = root
+    def rails_root
+      rails_app.root
+    end
+
+    def rails_root=(path)
+      rails_app.root = path
     end
 
     def environment
       @environment ||= begin
-        env = ENV["RAILS_ENV"] || ENV['RACK_ENV'] || ENV["ENV"] || ENV["ENVIRONMENT"]
+        env = RailsApp::RAILS_ENV || ENV['RACK_ENV'] || ENV["ENV"] || ENV["ENVIRONMENT"]
         ActiveSupport::StringInquirer.new(env || "development")
       end  
     end
@@ -65,7 +58,7 @@ module Protein
       return if finalization_disabled?
       disable_finalization do
         load_config_files
-        load_rails
+        load_rails(environment)
       end  
       @finalized = true
     end
@@ -121,47 +114,20 @@ module Protein
       files + (self.config_files || [])
     end
 
-    def load_rails
-      return unless self.use_rails
-      if rails_root
-        after_start do
-          Dir.chdir(rails_root) do
-            Protein.logger.debug "Loading Rails from #{rails_root} ..."
-            require File.join(rails_root, 'config', 'application')
-            Rails.env    = environment
-            Rails.logger = Protein.logger
-            require File.join(rails_root, 'config', 'environment')
-            # Preload app files
-            Rails.application.eager_load!
-            Protein.logger.debug "Rails loaded"
-          end
-        end
-        after_fork do
-          if rails_loded?
-            if ActiveRecord::Base.connected?
-              ActiveRecord::Base.connection.reconnect!
-              ActiveRecord::Base.verify_active_connections!
-            end
-            Rails.cache.reset if defined?(RAILS_CACHE) && Rails.cache.respond_to?(:reset)
-          end  
-        end
-      end  
+    def load_rails(env)
+      self.use_rails && rails_app.load(env)
     end    
 
     def find_rails
-      return Rails.root if defined?(Rails)
-      return ::Dir.pwd  if rails_path?(::Dir.pwd)
+      rails_app.find
     end
 
     def rails_path?(path)
-      return false if path.blank?
-      app_file = File.join(path, 'config', 'application.rb')
-      env_file = File.join(path, 'config', 'environment.rb')
-      File.exists?(app_file) && File.exists?(env_file)
+      rails_app.rails_path?(path)
     end
 
     def rails_loded?
-      defined?(Rails)
+      rails_app.defined?
     end
   end
 

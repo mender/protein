@@ -57,10 +57,14 @@ module Protein
       daemon.alive?
     end
 
-    def daemon_stop
+    def daemon_stop(force = false)
       if daemon_started?
         logger.info "Trying to stop daemon with pid #{daemon.pid}"
-        process.tools.stop(daemon.pid)
+        if force
+          process.tools.stop!(daemon.pid)
+        else
+          process.tools.stop(daemon.pid)
+        end
       else
         logger.info "Where is no daemon running"
         false
@@ -68,13 +72,7 @@ module Protein
     end
 
     def daemon_stop!
-      if daemon_started?
-        logger.info "Trying to forcefully stop daemon with pid #{daemon.pid}"
-        process.tools.stop!(daemon.pid)
-      else
-        logger.info "Where is no daemon running"
-        false
-      end
+      daemon_stop(true)
     end
 
     def daemon_run
@@ -99,20 +97,27 @@ module Protein
       worker.alive?
     end
 
-    def worker_stop(worker)
+    def worker_stop(worker, force = false)
       logger.info "Trying to stop worker with pid #{worker.pid}"
-      process.tools.stop(worker.pid)
+      if force
+        process.tools.stop!(worker.pid)
+      else
+        process.tools.stop(worker.pid)
+      end
     end
 
     def worker_stop!(worker)
-      logger.info "Trying to forcefully stop worker with pid #{worker.pid}"
-      process.tools.stop!(worker.pid)
+      worker_stop(worker, true)
     end
 
-    def workers_stop
+    def workers_stop(force = false)
       if (pids = worker_pids).present?
         logger.info "Trying to stop workers with pids #{pids}"
-        process.tools.stop_all(pids)
+        if force 
+          process.tools.stop_all!(pids)
+        else
+          process.tools.stop_all(pids)
+        end
       else
         logger.info "Active workers not found."
         false
@@ -120,13 +125,7 @@ module Protein
     end
 
     def workers_stop!
-      if (pids = worker_pids).present?
-        logger.info "Trying to forcefully stop workers with pids #{pids}"
-        process.tools.stop_all!(pids)
-      else
-        logger.info "Active workers not found."
-        false
-      end
+      workers_stop(true)
     end
 
     def daemon_info
