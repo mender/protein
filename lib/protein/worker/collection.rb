@@ -222,7 +222,7 @@ module Protein
         save
       end
 
-      def processed
+      def finished
         self.status         = :idle
         self.job            = nil
         self.job_started_at = nil
@@ -233,11 +233,11 @@ module Protein
       end
 
       def success
-        processed {|i| i.completed = i.completed + 1}
+        finished {|i| i.completed = i.completed + 1}
       end
 
       def fail
-        processed {|i| i.failed = i.failed + 1}
+        finished {|i| i.failed = i.failed + 1}
       end
 
       def generate_id
