@@ -222,22 +222,22 @@ module Protein
         save
       end
 
-      def success
+      def processed
         self.status         = :idle
         self.job            = nil
         self.job_started_at = nil
-        self.completed      = self.completed + 1
         self.processed      = self.processed + 1
+        
+        yield(self) if block_given?
         save
       end
 
+      def success
+        processed {|i| i.completed = i.completed + 1}
+      end
+
       def fail
-        self.status         = :idle
-        self.job            = nil
-        self.job_started_at = nil
-        self.failed         = self.failed + 1
-        self.processed      = self.processed + 1
-        save
+        processed {|i| i.failed = i.failed + 1}
       end
 
       def generate_id
