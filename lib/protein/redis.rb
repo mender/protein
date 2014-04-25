@@ -2,6 +2,24 @@
 require 'redis'
 
 module Protein
+  class RedisMutex
+    def self.acquire(redis, key, &block)
+      timeout(60) { wait(redis, key) }
+      redis.set(key, 1, 6)
+      yield
+    ensure
+      redis.delete(key)
+    end
+
+    protected
+
+    def self.wait(redis, key)
+      while redis.exists?(key) do
+        sleep 0.05
+      end
+    end
+  end
+  
   # Redis backend
   class Redis
     delegate :logger, :config, :to => :Protein
@@ -221,23 +239,11 @@ module Protein
       end
     end
 
-
     # execute +block+ with pessimistic locking
     def synchronize(mutex_id, &block)
       mutex_key = "mutex:#{mutex_id}"
 
-      timeout(60) do
-        loop do
-          break unless exists?(mutex_key)
-          sleep 0.05
-        end
-      end if exists?(mutex_key)
-
-      set(mutex_key, 1, 6)
-      result = yield
-      delete(mutex_key)
-
-      result
+      RedisMutex.acquire(self, mutex_key, &block)
     end
 
     def redis
