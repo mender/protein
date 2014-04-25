@@ -20,6 +20,7 @@ module Protein
       def acquire
         logger.debug "Worker lock #{name} waiting ..."
         id = redis.blpop(key, timeout)
+        logger.debug ">>> #{id}"
         if id.nil?
           raise Protein::TimeoutError.new("Worker lock #{name} timeout")
         end

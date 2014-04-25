@@ -110,6 +110,7 @@ module Protein
 
       def get_lock
         lock.acquire do |id|
+          # TODO избавиться
           # если дождались свободного места в пуле,
           # но во время ожидания пришла команда на остановку процесса
           unless process.running?
@@ -165,6 +166,7 @@ module Protein
       def self.field_setter(*fields)
         fields.each do |field|
           define_method("#{field}=") do |value|
+            logger.debug(">>>>#{field} => #{value} -> #{local.inspect}")
             local[field] = value
           end
         end

@@ -19,7 +19,7 @@ Gem::Specification.new do |gem|
   #gem.extra_rdoc_files = [ "LICENSE", "README.markdown" ]
   #gem.rdoc_options     = ["--charset=UTF-8"]
 
-  gem.add_dependency "redis", ">= 2"
+  gem.add_dependency "redis-namespace"
   gem.add_dependency "uuidtools"
   gem.add_dependency "activesupport", '~> 3.0' # FUCK!!!
   gem.add_development_dependency 'rake'

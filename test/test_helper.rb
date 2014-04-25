@@ -14,7 +14,7 @@ require 'mock_redis'
 
 Protein.config do |c|
   c.log_file = File.expand_path('../log/protein.log', File.dirname(__FILE__))
-  c.log_level = :error
+  c.log_level = :debug
   c.environment = :test
 
   c.concurrency = 4
@@ -30,7 +30,7 @@ Protein.config do |c|
 end
 
 Protein.tap do |p|
-  p.redis.connection = MockRedis.new
+  #p.redis.connection = MockRedis.new
 end
 
 def config

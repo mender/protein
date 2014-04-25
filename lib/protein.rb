@@ -54,6 +54,7 @@ module Protein
     end
 
     def redis
+      #@redis ||= Protein::Redis.new
       @redis ||= Protein::Redis.new
     end
   end
