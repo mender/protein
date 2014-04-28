@@ -19,7 +19,7 @@ module Protein
 
       def acquire
         logger.debug "Worker lock #{name} waiting ..."
-        id = redis.blpop(key, timeout)
+        id = redis.blpop_val(key, timeout)
         if id.nil?
           raise Protein::TimeoutError.new("Worker lock #{name} timeout")
         end
@@ -30,14 +30,14 @@ module Protein
 
       def release(id = nil)
         id ||= generate_id
-        redis.push(key, id)
+        redis.rpush(key, id)
         logger.debug "Worker lock #{name} released"
         id
       end
 
       def get
         logger.debug "Worker lock #{name} get"
-        redis.pop(key)
+        redis.rpop(key)
       end
 
       def reset
@@ -47,15 +47,15 @@ module Protein
       end
 
       def feel
-        value.times { redis.push(key, generate_id) }
+        value.times { redis.rpush(key, generate_id) }
       end
 
       def clear
-        redis.delete(key)
+        redis.del(key)
       end
 
       def size
-        redis.list_length(key)
+        redis.llen(key)
       end
       alias_method :available, :size
 

@@ -49,7 +49,7 @@ module Protein
       end
 
       def next_id
-        redis.increment(config.sequence_key)
+        redis.incr(config.sequence_key)
       end
 
       def reset_id

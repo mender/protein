@@ -105,20 +105,20 @@ describe Protein::Queue do
       TestQueue.redis = @redis = MiniTest::Mock.new
     end
 
-    it 'should call redis#mblpop with all queues and specified timeout' do
-      @redis.expect(:mblpop, ['key', {}], ['test_queue:q1', 'test_queue:q2', 42])
+    it 'should call redis#blpop with all queues and specified timeout' do
+      @redis.expect(:blpop, ['key', {}], ['test_queue:q1', 'test_queue:q2', 42])
       TestQueue.blpop(42)
       @redis.verify
     end
 
     it 'should call redis#blpop with zero timeout if timeout is not specified' do
-      @redis.expect(:mblpop, ['key', {}], ['test_queue:q1', 'test_queue:q2', 0])
+      @redis.expect(:blpop, ['key', {}], ['test_queue:q1', 'test_queue:q2', 0])
       TestQueue.blpop
       @redis.verify
     end
 
     it 'should yield with selected item if block given' do
-      @redis.expect(:mblpop, ['key', {:id => 42}], ['test_queue:q1', 'test_queue:q2', 0])
+      @redis.expect(:blpop, ['key', {:id => 42}], ['test_queue:q1', 'test_queue:q2', 0])
       yielded = nil
       TestQueue.blpop { |item| yielded = item }
       assert_instance_of Hash, yielded
@@ -126,12 +126,12 @@ describe Protein::Queue do
     end
 
     it 'should add queue name to item and return it' do
-      @redis.expect(:mblpop, ['key', {:id => 42}], ['test_queue:q1', 'test_queue:q2', 0])
+      @redis.expect(:blpop, ['key', {:id => 42}], ['test_queue:q1', 'test_queue:q2', 0])
       assert_equal({:id => 42, :queue => :key}, TestQueue.blpop)
     end
 
     it 'should delete queue key prefix from queue name' do
-      @redis.expect(:mblpop, ['test_queue:q1', {:id => 42}], ['test_queue:q1', 'test_queue:q2', 0])
+      @redis.expect(:blpop, ['test_queue:q1', {:id => 42}], ['test_queue:q1', 'test_queue:q2', 0])
       assert_equal({:id => 42, :queue => :q1}, TestQueue.blpop)
     end
   end
@@ -153,13 +153,13 @@ describe Protein::Queue do
   end
 
   it 'should not reset on initialize if key is list' do
-    @redis.push(@queue.key, 'some_data')
+    @redis.rpush(@queue.key, 'some_data')
     TestQueue.new(:default)
     assert_equal ['some_data'], @redis.list(@queue.key)
   end
 
   it 'should return queue length' do
-    5.times { @redis.push(@queue.key, 1) }
+    5.times { @redis.rpush(@queue.key, 1) }
     assert_equal 5, @queue.length
   end
 
@@ -168,31 +168,31 @@ describe Protein::Queue do
   end
 
   it 'should not be empty if list is not blank' do
-    @redis.push(@queue.key, 1)
+    @redis.rpush(@queue.key, 1)
     assert_equal false, @queue.empty?
   end
 
   it 'should rpush new item to redis if pushed' do
-    @redis.push(@queue.key, 'begin')
+    @redis.rpush(@queue.key, 'begin')
     @queue.push('some_data')
     assert_equal %w(begin some_data), @redis.list(@queue.key)
   end
 
   it 'should lpush new item to redis if unshift' do
-    @redis.push(@queue.key, 'begin')
+    @redis.rpush(@queue.key, 'begin')
     @queue.unshift('some_data')
     assert_equal %w(some_data begin), @redis.list(@queue.key)
   end
 
   it 'should rpop item from redis if pop' do
-    @redis.push(@queue.key, 'begin')
-    @redis.push(@queue.key, 'end')
+    @redis.rpush(@queue.key, 'begin')
+    @redis.rpush(@queue.key, 'end')
     assert_equal 'end', @queue.pop
   end
 
   it 'should lpop item from redis if shift' do
-    @redis.push(@queue.key, 'begin')
-    @redis.push(@queue.key, 'end')
+    @redis.rpush(@queue.key, 'begin')
+    @redis.rpush(@queue.key, 'end')
     assert_equal 'begin', @queue.shift
   end
 
@@ -202,26 +202,26 @@ describe Protein::Queue do
     end
 
     it 'should call redis#blpop with specified timeout' do
-      @redis.expect(:blpop, 'some_data', [@queue.key, 42])
+      @redis.expect(:blpop_val, 'some_data', [@queue.key, 42])
       assert_equal 'some_data', @queue.blpop(42)
       @redis.verify
     end
 
     it 'should call redis#blpop with zero timeout if timeout is not specified' do
-      @redis.expect(:blpop, 'some_data', [@queue.key, 0])
+      @redis.expect(:blpop_val, 'some_data', [@queue.key, 0])
       assert_equal 'some_data',@queue.blpop
       @redis.verify
     end
 
     it 'should yield with selected item if block given' do
-      @redis.expect(:blpop, 'some_data', [@queue.key, 0])
+      @redis.expect(:blpop_val, 'some_data', [@queue.key, 0])
       yielded = nil
       @queue.blpop { |item| yielded = item }
       assert_equal 'some_data', yielded
     end
 
     it 'should return item if block given' do
-      @redis.expect(:blpop, 'some_data', [@queue.key, 0])
+      @redis.expect(:blpop_val, 'some_data', [@queue.key, 0])
       assert_equal 'some_data', @queue.blpop { |_| 42 }
     end
   end

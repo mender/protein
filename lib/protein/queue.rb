@@ -6,7 +6,7 @@ module Protein
 
       def blpop(timeout = 0)
         args = keys + [timeout]
-        queue_key, item = redis.mblpop(*args)
+        queue_key, item = redis.blpop(*args)
         item[:queue] = extract_queue_name(queue_key) unless item.nil?
         yield(item) if block_given?
         item
@@ -71,7 +71,7 @@ module Protein
     end
 
     def length
-      redis.list_length(key).to_i
+      redis.llen(key).to_i
     end
 
     def push(item)
@@ -83,26 +83,26 @@ module Protein
     end
 
     def shift
-      item = redis.shift(key)
+      item = redis.lpop(key)
       yield(item) if block_given?
       item
     end
 
     def pop
-      item = redis.pop(key)
+      item = redis.rpop(key)
       yield(item) if block_given?
       item
     end
 
     def blpop(timeout = 0)
-      item = redis.blpop(key, timeout)
+      item = redis.blpop_val(key, timeout)
       yield(item) if block_given?
       item
     end
     alias_method :poll, :blpop
 
     def reset
-      redis.delete(key)
+      redis.del(key)
     end
 
     def key

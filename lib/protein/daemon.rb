@@ -140,7 +140,7 @@ module Protein
 
       def del
         logger.debug("Delete daemon pid")
-        redis.delete(key)
+        redis.del(key)
       end
 
       def store(pid)

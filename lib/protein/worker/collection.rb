@@ -72,7 +72,7 @@ module Protein
 
       def count
         logger.debug("Get length of workers collection #{key}")
-        redis.hlength(key)
+        redis.hlen(key)
       end
 
       def dead_workers
@@ -82,7 +82,7 @@ module Protein
 
       def delete_all
         logger.debug("Delete workers collection #{key}")
-        redis.delete(key) > 0
+        redis.del(key) > 0
       end
 
       def lock
@@ -110,6 +110,7 @@ module Protein
 
       def get_lock
         lock.acquire do |id|
+          # TODO избавиться
           # если дождались свободного места в пуле,
           # но во время ожидания пришла команда на остановку процесса
           unless process.running?
@@ -328,7 +329,7 @@ module Protein
 
       def delete_all
         logger.debug("Delete worker collection set #{key}")
-        redis.delete(key) > 0
+        redis.del(key) > 0
       end
 
       def key
