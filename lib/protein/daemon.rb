@@ -17,18 +17,7 @@ module Protein
           return
         end
 
-        register do
-          logger.debug "Enter main loop"
-          loop do
-            unless process.running?
-              logger.debug "Exit main loop"
-              break
-            end
-            strategy.loop # payload
-            logger.flush
-            sleep delay
-          end
-        end
+        register { main_loop }
       end
     end
 
@@ -82,6 +71,19 @@ module Protein
     end
 
     protected
+
+    def main_loop
+      logger.debug "Enter main loop"
+      loop do
+        unless process.running?
+          logger.debug "Exit main loop"
+          break
+        end
+        strategy.loop # payload
+        logger.flush
+        sleep delay
+      end
+    end
 
     def register
       _pid.store(process.pid) do
