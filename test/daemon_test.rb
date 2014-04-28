@@ -25,6 +25,14 @@ describe Protein::Daemon do
     end
   end
 
+  def without_auto_flushing
+    af = Protein.logger.auto_flushing
+    Protein.logger.auto_flushing = false
+    yield
+  ensure
+    Protein.logger.auto_flushing = af
+  end
+
   before do
     @daemon = TestDaemon.new
     Protein.redis.delete_keys
@@ -126,9 +134,11 @@ describe Protein::Daemon do
     end
 
     it 'should flush logger in main loop' do
-      assert_call_count 3, @daemon.logger, :flush do
-        @daemon.run
-      end
+      without_auto_flushing do 
+        assert_call_count 3, @daemon.logger, :flush do
+          @daemon.run
+        end
+      end  
     end
 
     it 'should exit main loop if process is marked as stopped' do

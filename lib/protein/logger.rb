@@ -68,7 +68,7 @@ module Protein
     def reopen
       exception_handling do
         unless stdout?
-          close
+          close unless closed?
           if @log_file.respond_to?(:write)
             @log = @log_file
           elsif File.exist?(@log_file)
